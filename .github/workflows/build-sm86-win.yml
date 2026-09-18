@@ -20,7 +20,7 @@ jobs:
       - name: Setup CUDA 12.8
         uses: Jimver/cuda-toolkit@v0.2.21
         with:
-          cuda: '12.8'
+          cuda: '12.8.0'
           method: 'network'
 
       - name: Configure (sm_86, Release)
