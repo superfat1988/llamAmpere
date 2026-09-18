@@ -17,10 +17,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup CUDA 12.8
+      - name: Setup CUDA 13.0
         uses: Jimver/cuda-toolkit@v0.2.21
         with:
-          cuda: '12.8.0'
+          cuda: '13.0.0'
           method: 'network'
 
       - name: Setup MSVC environment (Ninja)
@@ -52,11 +52,11 @@ jobs:
           cp build-sm86/bin/Release/llama-cli.exe dist/ || true
           cp build-sm86/bin/Release/llama-bench.exe dist/ || true
           cp build-sm86/bin/Release/test-backend-ops.exe dist/ || true
-          # CUDA 12.8 runtime DLLs (so the exes run without a full toolkit install)
-          CUDA_BIN="/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.8/bin"
-          cp "$CUDA_BIN/cudart64_12.dll" dist/ 2>/dev/null || true
-          cp "$CUDA_BIN/cublas64_12.dll" dist/ 2>/dev/null || true
-          cp "$CUDA_BIN/cublasLt64_12.dll" dist/ 2>/dev/null || true
+          # CUDA 13 runtime DLLs (so the exes run without a full toolkit install)
+          CUDA_BIN="/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.0/bin"
+          cp "$CUDA_BIN"/cudart64_*.dll dist/ 2>/dev/null || true
+          cp "$CUDA_BIN"/cublas64_*.dll dist/ 2>/dev/null || true
+          cp "$CUDA_BIN"/cublasLt64_*.dll dist/ 2>/dev/null || true
           # MSVC runtime (vcruntime/msvcp) — runner is Windows Server 2022
           cp /c/Windows/System32/vcruntime140.dll dist/ 2>/dev/null || true
           cp /c/Windows/System32/vcruntime140_1.dll dist/ 2>/dev/null || true
