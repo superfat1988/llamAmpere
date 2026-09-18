@@ -1,0 +1,66 @@
+# Build llamAmpere (JakeATX/llamAmpere) for sm_86 (RTX 30 series) on Windows
+# Produces llama-server / llama-cli / llama-bench / test-backend-ops + bundled CUDA 12.8 runtime DLLs.
+# Trigger: manual (workflow_dispatch) or push to main.
+name: build-llamampere-sm86-win
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-windows-sm86:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup CUDA 12.8
+        uses: Jimver/cuda-toolkit@v0.2.21
+        with:
+          cuda: '12.8'
+          method: 'network'
+
+      - name: Configure (sm_86, Release)
+        shell: bash
+        run: |
+          cmake -S . -B build-sm86 -G "Visual Studio 17 2022" -A x64 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DGGML_CUDA=ON \
+            -DGGML_CUDA_FA=ON \
+            -DCMAKE_CUDA_ARCHITECTURES=86 \
+            -DGGML_NATIVE=OFF
+
+      - name: Build targets
+        shell: bash
+        run: |
+          cmake --build build-sm86 --config Release -j 4 \
+            --target llama-server llama-cli llama-bench test-backend-ops
+
+      - name: Stage artifacts + bundle runtime DLLs
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp build-sm86/bin/Release/llama-server.exe dist/ || true
+          cp build-sm86/bin/Release/llama-cli.exe dist/ || true
+          cp build-sm86/bin/Release/llama-bench.exe dist/ || true
+          cp build-sm86/bin/Release/test-backend-ops.exe dist/ || true
+          # CUDA 12.8 runtime DLLs (so the exes run without a full toolkit install)
+          CUDA_BIN="/c/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.8/bin"
+          cp "$CUDA_BIN/cudart64_12.dll" dist/ 2>/dev/null || true
+          cp "$CUDA_BIN/cublas64_12.dll" dist/ 2>/dev/null || true
+          cp "$CUDA_BIN/cublasLt64_12.dll" dist/ 2>/dev/null || true
+          # MSVC runtime (vcruntime/msvcp) — runner is Windows Server 2022
+          cp /c/Windows/System32/vcruntime140.dll dist/ 2>/dev/null || true
+          cp /c/Windows/System32/vcruntime140_1.dll dist/ 2>/dev/null || true
+          cp /c/Windows/System32/msvcp140.dll dist/ 2>/dev/null || true
+          ls -la dist/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: llamampere-sm86-win
+          path: dist/
+          if-no-files-found: error
