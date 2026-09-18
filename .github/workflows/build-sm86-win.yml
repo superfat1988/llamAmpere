@@ -23,10 +23,15 @@ jobs:
           cuda: '12.8.0'
           method: 'network'
 
+      - name: Setup MSVC environment (Ninja)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Configure (sm_86, Release)
         shell: bash
         run: |
-          cmake -S . -B build-sm86 -G "Visual Studio 17 2022" -A x64 \
+          cmake -S . -B build-sm86 -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DGGML_CUDA=ON \
             -DGGML_CUDA_FA=ON \
